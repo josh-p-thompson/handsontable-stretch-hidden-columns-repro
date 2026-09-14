@@ -1,6 +1,7 @@
 # Repro: `stretchH: 'all'` + `hiddenColumns.indicators` → phantom horizontal scrollbar → frozen rows misalign
 
-Minimal reproduction for a Handsontable bug (reproduces on **18.0.0 and 18.1.0**):
+Minimal Vite + React + TypeScript reproduction for a Handsontable bug (reproduces on
+**18.0.0 and 18.1.0**, via `@handsontable/react-wrapper`):
 
 With `stretchH: 'all'` and `hiddenColumns: { indicators: true }`, hiding columns at
 runtime via `getPlugin('hiddenColumns').hideColumns()` leaves the master holder's
@@ -23,5 +24,5 @@ Open in StackBlitz (or `npm install && npm run dev` locally), then:
 2. Click **"Scroll to bottom"** — the frozen columns stop ~15px before the scrollable
    columns; rows are visibly misaligned.
 
-All logic is in `index.html`; Handsontable is loaded from the jsDelivr CDN (pin the
-version in the two URLs at the top).
+All the relevant code is in `src/App.tsx`. The Handsontable version is pinned in
+`package.json`.
