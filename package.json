@@ -1,0 +1,14 @@
+{
+  "name": "handsontable-stretch-hidden-indicators-repro",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "start": "vite"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "stackblitz": {
+    "startCommand": "npm run dev"
+  }
+}

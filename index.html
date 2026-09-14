@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>stretchH:'all' + hiddenColumns indicators = phantom scrollbar + frozen-pane misalignment</title>
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@18.1.0/dist/handsontable.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@18.1.0/styles/handsontable.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@18.1.0/styles/ht-theme-main.min.css" />
+  <style>
+    body { font-family: sans-serif; margin: 16px; }
+    #status { white-space: pre; font-family: monospace; font-size: 13px; margin-top: 12px; }
+    .bad { color: #c00; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h3>Repro: stretchH:'all' + hiddenColumns.indicators → phantom horizontal scrollbar → frozen rows misalign</h3>
+  <ol>
+    <li>Click <b>"Hide all but 3 columns"</b>. The 3 remaining columns stretch to fill the width exactly —
+        yet a horizontal scrollbar appears (scrollWidth is 1px larger than clientWidth). Clicking it just flashes.</li>
+    <li>Scroll to the bottom. The frozen columns (left pane) stop ~15px before the scrollable columns do,
+        so rows across the frozen boundary are misaligned at the bottom.</li>
+    <li>Set <code>hiddenColumns: { indicators: false }</code> (or <code>stretchH: 'none'</code>) and the
+        problem disappears.</li>
+  </ol>
+  <p>
+    <button id="hide">Hide all but 3 columns</button>
+    <button id="show">Show all</button>
+    <button id="bottom">Scroll to bottom</button>
+  </p>
+  <div id="grid"></div>
+  <div id="status"></div>
+
+  <script>
+    const NUM_ROWS = 40;
+    const NUM_SCENARIOS = 20; // columns 2..21; columns 0-1 are frozen
+    const data = Array.from({ length: NUM_ROWS }, (_, r) =>
+      Array.from({ length: 2 + NUM_SCENARIOS }, (_, c) =>
+        c === 0 ? `Attribute ${r}` : c === 1 ? `G${r % 5}` : r * 100 + c));
+
+    const hot = new Handsontable(document.getElementById('grid'), {
+      data,
+      colHeaders: true,
+      width: 900,
+      height: 400,
+      fixedColumnsStart: 2,
+      stretchH: 'all',
+      hiddenColumns: { indicators: true }, // <-- indicators:true is required to reproduce
+      themeName: 'ht-theme-main',
+      licenseKey: 'non-commercial-and-evaluation',
+    });
+
+    const scenarioCols = Array.from({ length: NUM_SCENARIOS }, (_, i) => i + 2);
+    document.getElementById('hide').onclick = () => {
+      hot.getPlugin('hiddenColumns').hideColumns(scenarioCols.slice(3));
+      hot.render();
+      setTimeout(report, 100);
+    };
+    document.getElementById('show').onclick = () => {
+      hot.getPlugin('hiddenColumns').showColumns(scenarioCols);
+      hot.render();
+      setTimeout(report, 100);
+    };
+    document.getElementById('bottom').onclick = () => {
+      const mh = hot.rootElement.querySelector('.ht_master .wtHolder');
+      mh.scrollTop = mh.scrollHeight;
+      setTimeout(report, 100);
+    };
+
+    function report() {
+      const mh = hot.rootElement.querySelector('.ht_master .wtHolder');
+      const ch = hot.rootElement.querySelector('.ht_clone_inline_start .wtHolder');
+      const phantom = mh.scrollWidth > mh.clientWidth;
+      const heightMismatch = ch.offsetHeight - mh.clientHeight;
+      document.getElementById('status').innerHTML =
+        `Handsontable ${Handsontable.version}\n` +
+        `master scrollWidth: ${mh.scrollWidth}  clientWidth: ${mh.clientWidth}` +
+        (phantom ? '  <span class="bad">← PHANTOM HORIZONTAL SCROLLBAR (content fits exactly)</span>' : '') + '\n' +
+        `frozen-clone holder height: ${ch.offsetHeight}  master usable height: ${mh.clientHeight}` +
+        (heightMismatch ? `  <span class="bad">← frozen pane is ${heightMismatch}px taller → rows misalign at the bottom</span>` : '');
+    }
+    report();
+  </script>
+</body>
+</html>
